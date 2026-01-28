@@ -12,10 +12,60 @@
 
   <!-- Code snippet -->
   <pre><code class="language-javascript">
-function greet(name) {
-    console.log("Hello, " + name + "!");
-}
-greet("Naheed");
+from flask import Flask, render_template
+
+from get_iss import iss_loc
+from get_weather import get_weather_data
+from get_address import address
+from get_country import country
+from get_distance import disc
+
+
+app = Flask(__name__)
+
+
+@app.route('/')
+
+def index():
+
+  #where the iss is
+  data= iss_loc()
+  lat,lon =data[0],data[1]
+  print(lat,lon)
+  # weather information
+
+  weather = get_weather_data(lat,lon)
+  temp_c = round(weather["main"]["temp"]-273.15,2)
+  temp_description = weather["weather"][0]["description"]
+
+  # distance between us and the iss
+  distance =disc(lat,lon,46.5290875,-80.9455914)
+  print(f"You are {distance} distance from the ISS !")
+
+
+  # reverse geolocation - we pass the lat,lon and get the countrycode to be used in restcountries api
+
+  addr = address(lat,lon)
+  print("Country code ",addr["countryCode"])
+
+  if (addr["countryCode"]==""):
+    print("the iss is overwater !")
+    location ="the iss is overwater !"
+    flag1 = None
+
+  else:
+    location = addr["countryCode"]
+    #flag rest countries 
+    flag1 = country(location)[0]["flags"]["png"]
+    print(flag1)
+  return render_template("index.html",lat=lat,lon=lon,temp_c=temp_c, temp_description= temp_description,distance=distance,location=location,flag1=flag1,page_title="Home")
+
+
+
+if __name__ == '__main__':
+  app.run(host='0.0.0.0', port=5000)
+
+
   </code></pre>
 
   <!-- Prism.js for syntax highlighting -->
